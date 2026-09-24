@@ -10,6 +10,8 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js untuk Grafik Analisis Panel Admin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
     <style>
         body { background-color: #0f4c81; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -100,6 +102,10 @@
             <button onclick="goToStep(1)" class="w-full text-gray-400 text-xs hover:text-gray-600">
                 <i class="fa-solid fa-arrow-left mr-1"></i> Kembali
             </button>
+            <p class="text-center text-xs text-gray-500">
+                Belum punya akun?
+                <button type="button" onclick="openSignupModal()" class="text-blue-600 font-semibold hover:underline">Daftar di sini</button>
+            </p>
         </div>
 
         <!-- STEP 3: KONFIRMASI DATA & TOKEN -->
@@ -325,6 +331,30 @@
         </div>
     </div>
 
+    <!-- MODAL SIGNUP MANDIRI PESERTA -->
+    <div id="signup-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg">Daftar Akun Peserta</h3>
+                <button onclick="closeSignupModal()" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <p class="text-xs text-gray-500">Buat akun sendiri agar dapat login sebelum mengerjakan soal.</p>
+            <div class="space-y-3">
+                <input type="text" id="su-username" placeholder="Buat Username" class="w-full p-2 border rounded text-sm">
+                <input type="password" id="su-password" placeholder="Buat Password (min. 4 karakter)" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="su-nik" placeholder="NIK" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="su-nama" placeholder="Nama Lengkap" class="w-full p-2 border rounded text-sm">
+                <select id="su-gender" class="w-full p-2 border rounded text-sm">
+                    <option value="Laki-Laki">Laki-Laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                </select>
+            </div>
+            <button onclick="submitSignup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition duration-200 shadow-md">
+                Daftar Sekarang
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL ADMIN -->
     <div id="admin-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-3xl rounded-xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -348,6 +378,7 @@
                     <button id="tabbtn-peserta" onclick="switchAdminTab('peserta')" class="pb-2 border-b-2 border-transparent whitespace-nowrap">Kelola Peserta</button>
                     <button id="tabbtn-soal" onclick="switchAdminTab('soal')" class="pb-2 border-b-2 border-transparent whitespace-nowrap">Input Soal</button>
                     <button id="tabbtn-rangkuman" onclick="switchAdminTab('rangkuman')" class="pb-2 border-b-2 border-transparent whitespace-nowrap">Rangkuman Nilai</button>
+                    <button id="tabbtn-analisis" onclick="switchAdminTab('analisis')" class="pb-2 border-b-2 border-transparent whitespace-nowrap">Analisis</button>
                 </div>
 
                 <!-- Tab Web -->
@@ -397,8 +428,24 @@
                     <div class="grid grid-cols-3 gap-2">
                         <select id="q-jenjang" onchange="handleAdminJenjangChange()" class="p-2 border rounded"><option value="">-- Pilih Jenjang --</option></select>
                         <select id="q-jenis" onchange="handleAdminJenisChange()" class="p-2 border rounded"><option value="">-- Pilih Jenis --</option></select>
-                        <select id="q-mapel" onchange="refreshSavedQuestionsList()" class="p-2 border rounded"><option value="">-- Pilih Mapel --</option></select>
+                        <select id="q-mapel" onchange="handleAdminMapelChange()" class="p-2 border rounded"><option value="">-- Pilih Mapel --</option></select>
                     </div>
+
+                    <!-- Bab/Materi: wajib dipilih SEBELUM mengisi form soal di bawah -->
+                    <div id="q-materi-wrap" class="border-2 border-blue-200 bg-blue-50 rounded-lg p-3 space-y-2">
+                        <label class="font-bold text-xs block text-blue-700"><i class="fa-solid fa-layer-group mr-1"></i> Bab/Materi (wajib dipilih sebelum menambahkan soal)</label>
+                        <div class="flex gap-2">
+                            <select id="q-materi-select" class="flex-1 p-2 border rounded text-sm">
+                                <option value="">-- Pilih Jenjang/Jenis/Mapel dahulu --</option>
+                            </select>
+                            <button onclick="refreshMateriSelect()" class="bg-gray-200 px-3 py-2 rounded text-xs" title="Muat ulang daftar Bab/Materi"><i class="fa-solid fa-rotate"></i></button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="q-materi-new" placeholder="Bab/Materi baru (cth: Aljabar, Teks Eksposisi)" class="flex-1 p-2 border rounded text-xs">
+                            <button onclick="submitMateri()" class="bg-blue-600 text-white px-3 py-2 rounded text-xs font-semibold whitespace-nowrap">+ Tambah</button>
+                        </div>
+                    </div>
+
                     <select id="q-type" onchange="renderQuestionForm()" class="w-full p-2 border rounded font-bold">
                         <option value="PG">Pilihan Ganda Biasa (PG)</option>
                         <option value="PGK">PG Kompleks - Jawaban Benar Lebih dari 1 (PGK)</option>
@@ -475,6 +522,41 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Tab Analisis (BARU) -->
+                <div id="tab-analisis" class="hidden space-y-5 text-sm">
+                    <div class="flex justify-between items-center flex-wrap gap-2">
+                        <div>
+                            <h4 class="font-bold text-xs">Grafik Analisis Peserta & Soal</h4>
+                            <p id="analisis-stats" class="text-[11px] text-gray-400"></p>
+                        </div>
+                        <button onclick="refreshAnalisisCharts()" class="text-xs bg-gray-200 px-2 py-1 rounded">Refresh</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border rounded-lg p-3">
+                            <h5 class="font-bold text-xs mb-2 text-gray-600">Status Pengerjaan Peserta</h5>
+                            <canvas id="chart-status" height="200"></canvas>
+                        </div>
+                        <div class="border rounded-lg p-3">
+                            <h5 class="font-bold text-xs mb-2 text-gray-600">Rata-rata Skor per Mata Pelajaran</h5>
+                            <canvas id="chart-skor-mapel" height="200"></canvas>
+                        </div>
+                        <div class="border rounded-lg p-3">
+                            <h5 class="font-bold text-xs mb-2 text-gray-600">Distribusi Skor Peserta</h5>
+                            <canvas id="chart-distribusi-skor" height="200"></canvas>
+                        </div>
+                        <div class="border rounded-lg p-3">
+                            <h5 class="font-bold text-xs mb-2 text-gray-600">Jumlah Soal per Bab/Materi</h5>
+                            <div class="grid grid-cols-3 gap-2 mb-2">
+                                <select id="an-jenjang" onchange="handleAnJenjangChange()" class="p-1.5 border rounded text-xs"><option value="">-- Jenjang --</option></select>
+                                <select id="an-jenis" onchange="handleAnJenisChange()" class="p-1.5 border rounded text-xs"><option value="">-- Jenis --</option></select>
+                                <select id="an-mapel" onchange="refreshChartSoalPerBab()" class="p-1.5 border rounded text-xs"><option value="">-- Mapel --</option></select>
+                            </div>
+                            <canvas id="chart-soal-bab" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -484,7 +566,7 @@
         // ====================================================
         // GANTI URL DI BAWAH INI DENGAN URL DEPLOYMENT GAS ANDA
         // ====================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbw9ECXarTyxo93tiwcIWxQ9QNn2qRY6z419VJRtIEZhbzMdlxc3n2MD-xFwKrY5g1XT/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby6T7p84ggRZTHDBWZypN8Gh2eFqcYGT-J-ubtr9GULYZQVwOuMpbnNt6P7QkouchbM/exec";
 
         let appData = { settings: {}, master: [] };
         let currentUser = null;
@@ -610,6 +692,53 @@
             fetch(`${API_URL}?action=getToken`)
                 .then(res => res.json())
                 .then(data => document.getElementById('display-token').innerText = data.token);
+        }
+
+        // ============================================================
+        // SIGNUP MANDIRI PESERTA (BARU)
+        // Peserta dapat membuat akun sendiri (selain akun yang dibuat
+        // admin lewat panel admin) sebelum login untuk mengerjakan soal.
+        // ============================================================
+        function openSignupModal() {
+            document.getElementById('signup-modal').classList.remove('hidden');
+        }
+
+        function closeSignupModal() {
+            document.getElementById('signup-modal').classList.add('hidden');
+        }
+
+        function submitSignup() {
+            const u = {
+                username: document.getElementById('su-username').value.trim(),
+                password: document.getElementById('su-password').value.trim(),
+                nik: document.getElementById('su-nik').value.trim(),
+                nama: document.getElementById('su-nama').value.trim(),
+                gender: document.getElementById('su-gender').value
+            };
+
+            if (!u.username || !u.password || !u.nik || !u.nama) {
+                return alert("Lengkapi semua data pendaftaran terlebih dahulu!");
+            }
+            if (u.password.length < 4) {
+                return alert("Password minimal 4 karakter!");
+            }
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'signupUser', user: u })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert("Pendaftaran berhasil! Silakan login dengan akun yang baru dibuat.");
+                    document.getElementById('login-user').value = u.username;
+                    document.getElementById('login-pass').value = '';
+                    ['su-username', 'su-password', 'su-nik', 'su-nama'].forEach(id => document.getElementById(id).value = '');
+                    closeSignupModal();
+                } else {
+                    alert(data.message || 'Gagal mendaftar, silakan coba lagi.');
+                }
+            }).catch(() => {
+                alert("Gagal mendaftar. Periksa koneksi internet Anda dan coba lagi.");
+            });
         }
 
         function validateToken() {
@@ -1102,7 +1231,7 @@
         }
 
         function switchAdminTab(tab) {
-            const tabs = ['web', 'master', 'peserta', 'soal', 'rangkuman'];
+            const tabs = ['web', 'master', 'peserta', 'soal', 'rangkuman', 'analisis'];
             tabs.forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
                 const btn = document.getElementById(`tabbtn-${t}`);
@@ -1115,6 +1244,7 @@
             if (tab === 'peserta') refreshUserList();
             if (tab === 'soal') refreshSavedQuestionsList();
             if (tab === 'rangkuman') refreshSummaryList();
+            if (tab === 'analisis') { populateAnalisisSelects(); refreshAnalisisCharts(); }
         }
 
         // --- Cascading select untuk Admin: Jenjang -> Jenis -> Mapel ---
@@ -1125,6 +1255,7 @@
 
             resetSelect('q-jenis', '-- Pilih Jenis --');
             resetSelect('q-mapel', '-- Pilih Mapel --');
+            resetMateriSelect();
 
             renderQuestionForm();
         }
@@ -1137,6 +1268,7 @@
             jenisList.forEach(jn => sel.innerHTML += `<option value="${jn}">${jn}</option>`);
 
             resetSelect('q-mapel', '-- Pilih Mapel --');
+            resetMateriSelect();
             refreshSavedQuestionsList();
         }
 
@@ -1147,7 +1279,74 @@
             const sel = document.getElementById('q-mapel');
             sel.innerHTML = '<option value="">-- Pilih Mapel --</option>';
             mapelList.forEach(mp => sel.innerHTML += `<option value="${mp}">${mp}</option>`);
+            resetMateriSelect();
             refreshSavedQuestionsList();
+        }
+
+        function handleAdminMapelChange() {
+            refreshSavedQuestionsList();
+            refreshMateriSelect();
+        }
+
+        // ============================================================
+        // BAB / MATERI (BARU)
+        // Admin wajib memilih (atau menambah lalu memilih) Bab/Materi di
+        // sini SEBELUM mengisi form soal di bawahnya. Daftar Bab/Materi
+        // di-scope ke kombinasi Jenjang+Jenis+Mapel yang sedang dipilih.
+        // ============================================================
+        function resetMateriSelect() {
+            const sel = document.getElementById('q-materi-select');
+            sel.innerHTML = '<option value="">-- Pilih Jenjang/Jenis/Mapel dahulu --</option>';
+        }
+
+        function refreshMateriSelect() {
+            const jenjang = document.getElementById('q-jenjang').value;
+            const jenis = document.getElementById('q-jenis').value;
+            const mapel = document.getElementById('q-mapel').value;
+            const sel = document.getElementById('q-materi-select');
+
+            if (!jenjang || !jenis || !mapel) {
+                resetMateriSelect();
+                return;
+            }
+
+            sel.innerHTML = '<option value="">Memuat...</option>';
+            fetch(`${API_URL}?action=getMateri&jenjang=${encodeURIComponent(jenjang)}&jenis=${encodeURIComponent(jenis)}&mapel=${encodeURIComponent(mapel)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const list = (data.success && data.materi) ? data.materi : [];
+                    if (list.length === 0) {
+                        sel.innerHTML = '<option value="">-- Belum ada Bab/Materi, tambahkan dahulu --</option>';
+                        return;
+                    }
+                    sel.innerHTML = '<option value="">-- Pilih Bab/Materi --</option>' +
+                        list.map(m => `<option value="${m.babMateri}">${m.babMateri}</option>`).join('');
+                })
+                .catch(() => {
+                    sel.innerHTML = '<option value="">-- Gagal memuat Bab/Materi --</option>';
+                });
+        }
+
+        function submitMateri() {
+            const jenjang = document.getElementById('q-jenjang').value;
+            const jenis = document.getElementById('q-jenis').value;
+            const mapel = document.getElementById('q-mapel').value;
+            const babMateri = document.getElementById('q-materi-new').value.trim();
+
+            if (!jenjang || !jenis || !mapel) return alert("Pilih Jenjang, Jenis, dan Mapel terlebih dahulu!");
+            if (!babMateri) return alert("Isi nama Bab/Materi terlebih dahulu!");
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'saveMateri', materi: { jenjang, jenis, mapel, babMateri } })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    document.getElementById('q-materi-new').value = '';
+                    refreshMateriSelect();
+                } else {
+                    alert(data.message || 'Gagal menambahkan Bab/Materi');
+                }
+            });
         }
 
         // ============================================================
@@ -1231,7 +1430,10 @@
             const mapel = document.getElementById('q-mapel').value;
             const question = document.getElementById('q-question').value.trim();
 
+            const babMateri = document.getElementById('q-materi-select').value;
+
             if (!jenjang || !jenis || !mapel) return alert("Lengkapi Jenjang, Jenis, dan Mapel terlebih dahulu!");
+            if (!babMateri) return alert("Pilih Bab/Materi terlebih dahulu sebelum menyimpan soal!");
             if (!question) return alert("Teks pertanyaan tidak boleh kosong!");
 
             const rows = document.querySelectorAll('#q-rows-wrap .q-opt-row');
@@ -1273,7 +1475,7 @@
             }
 
             const qData = {
-                jenjang, jenis, mapel,
+                jenjang, jenis, mapel, babMateri,
                 type: currentQType,
                 stimulusText: document.getElementById('q-stimulus-text').value,
                 stimulusImg: document.getElementById('q-img-url').value,
@@ -1328,9 +1530,10 @@
                     listEl.innerHTML = data.questions.map((q, i) => {
                         const plainQuestion = (q.question || '').replace(/<[^>]+>/g, '');
                         const preview = plainQuestion.length > 60 ? plainQuestion.slice(0, 60) + '...' : plainQuestion;
+                        const babTag = q.babMateri ? `<span class="text-blue-600 font-semibold">[${q.babMateri}]</span> ` : '';
                         return `
                         <div class="flex justify-between items-center border-b py-1 gap-2">
-                            <span class="flex-1">${i + 1}. [${q.type}] ${preview}</span>
+                            <span class="flex-1">${i + 1}. [${q.type}] ${babTag}${preview}</span>
                             <button onclick="deleteQuestionById('${q.id}')" class="text-red-500 hover:text-red-700 shrink-0"><i class="fa-solid fa-trash"></i></button>
                         </div>`;
                     }).join('');
@@ -1494,6 +1697,197 @@
                 })
                 .catch(() => {
                     body.innerHTML = '<tr><td colspan="8" class="text-center text-red-500 p-3">Gagal memuat data rangkuman.</td></tr>';
+                });
+        }
+
+        // ============================================================
+        // TAB ANALISIS (BARU) - Grafik memakai Chart.js
+        // ============================================================
+        let chartStatus = null;
+        let chartSkorMapel = null;
+        let chartDistribusiSkor = null;
+        let chartSoalBab = null;
+
+        function destroyChart(ref) {
+            if (ref) ref.destroy();
+            return null;
+        }
+
+        function refreshAnalisisCharts() {
+            const statsEl = document.getElementById('analisis-stats');
+            statsEl.innerText = 'Memuat data...';
+
+            fetch(`${API_URL}?action=getSummary`)
+                .then(res => res.json())
+                .then(data => {
+                    const summary = (data.success && data.summary) ? data.summary : [];
+
+                    const selesai = summary.filter(s => s.status === 'Selesai');
+                    const rataRata = selesai.length
+                        ? Math.round(selesai.reduce((sum, s) => sum + Number(s.skor || 0), 0) / selesai.length)
+                        : 0;
+                    statsEl.innerText = `${summary.length} peserta tercatat | ${selesai.length} sudah mengirim jawaban | Rata-rata skor: ${rataRata}`;
+
+                    renderChartStatus(summary);
+                    renderChartSkorMapel(selesai);
+                    renderChartDistribusiSkor(selesai);
+                })
+                .catch(() => {
+                    statsEl.innerText = 'Gagal memuat data analisis.';
+                });
+        }
+
+        function renderChartStatus(summary) {
+            const selesaiCount = summary.filter(s => s.status === 'Selesai').length;
+            const berlangsungCount = summary.filter(s => s.status !== 'Selesai').length;
+
+            chartStatus = destroyChart(chartStatus);
+            const ctx = document.getElementById('chart-status');
+            chartStatus = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selesai', 'Berlangsung'],
+                    datasets: [{
+                        data: [selesaiCount, berlangsungCount],
+                        backgroundColor: ['#16a34a', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+                }
+            });
+        }
+
+        function renderChartSkorMapel(selesai) {
+            const byMapel = {};
+            selesai.forEach(s => {
+                const mp = s.mapel || '-';
+                if (!byMapel[mp]) byMapel[mp] = { total: 0, count: 0 };
+                byMapel[mp].total += Number(s.skor || 0);
+                byMapel[mp].count += 1;
+            });
+            const labels = Object.keys(byMapel);
+            const values = labels.map(mp => Math.round(byMapel[mp].total / byMapel[mp].count));
+
+            chartSkorMapel = destroyChart(chartSkorMapel);
+            const ctx = document.getElementById('chart-skor-mapel');
+            chartSkorMapel = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['Belum ada data'],
+                    datasets: [{
+                        label: 'Rata-rata Skor',
+                        data: values.length ? values : [0],
+                        backgroundColor: '#1e61a1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderChartDistribusiSkor(selesai) {
+            const bins = ['0-20', '21-40', '41-60', '61-80', '81-100'];
+            const counts = [0, 0, 0, 0, 0];
+            selesai.forEach(s => {
+                const skor = Number(s.skor || 0);
+                if (skor <= 20) counts[0]++;
+                else if (skor <= 40) counts[1]++;
+                else if (skor <= 60) counts[2]++;
+                else if (skor <= 80) counts[3]++;
+                else counts[4]++;
+            });
+
+            chartDistribusiSkor = destroyChart(chartDistribusiSkor);
+            const ctx = document.getElementById('chart-distribusi-skor');
+            chartDistribusiSkor = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: bins,
+                    datasets: [{
+                        label: 'Jumlah Peserta',
+                        data: counts,
+                        backgroundColor: '#7c3aed'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- Cascading select untuk grafik "Jumlah Soal per Bab/Materi" ---
+        function populateAnalisisSelects() {
+            const jSelect = document.getElementById('an-jenjang');
+            jSelect.innerHTML = '<option value="">-- Jenjang --</option>';
+            [...new Set(appData.master.map(m => m.jenjang))].filter(Boolean).forEach(j => jSelect.innerHTML += `<option value="${j}">${j}</option>`);
+
+            resetSelect('an-jenis', '-- Jenis --');
+            resetSelect('an-mapel', '-- Mapel --');
+            chartSoalBab = destroyChart(chartSoalBab);
+        }
+
+        function handleAnJenjangChange() {
+            const j = document.getElementById('an-jenjang').value;
+            const jenisList = [...new Set(appData.master.filter(m => m.jenjang === j).map(m => m.jenis))].filter(Boolean);
+            const sel = document.getElementById('an-jenis');
+            sel.innerHTML = '<option value="">-- Jenis --</option>';
+            jenisList.forEach(jn => sel.innerHTML += `<option value="${jn}">${jn}</option>`);
+            resetSelect('an-mapel', '-- Mapel --');
+        }
+
+        function handleAnJenisChange() {
+            const j = document.getElementById('an-jenjang').value;
+            const jn = document.getElementById('an-jenis').value;
+            const mapelList = [...new Set(appData.master.filter(m => m.jenjang === j && m.jenis === jn).map(m => m.mapel))].filter(Boolean);
+            const sel = document.getElementById('an-mapel');
+            sel.innerHTML = '<option value="">-- Mapel --</option>';
+            mapelList.forEach(mp => sel.innerHTML += `<option value="${mp}">${mp}</option>`);
+        }
+
+        function refreshChartSoalPerBab() {
+            const jenjang = document.getElementById('an-jenjang').value;
+            const jenis = document.getElementById('an-jenis').value;
+            const mapel = document.getElementById('an-mapel').value;
+            if (!jenjang || !jenis || !mapel) return;
+
+            fetch(`${API_URL}?action=getQuestions&jenjang=${encodeURIComponent(jenjang)}&jenis=${encodeURIComponent(jenis)}&mapel=${encodeURIComponent(mapel)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const list = (data.success && data.questions) ? data.questions : [];
+                    const byBab = {};
+                    list.forEach(q => {
+                        const bab = q.babMateri || 'Tanpa Bab/Materi';
+                        byBab[bab] = (byBab[bab] || 0) + 1;
+                    });
+                    const labels = Object.keys(byBab);
+                    const values = labels.map(b => byBab[b]);
+
+                    chartSoalBab = destroyChart(chartSoalBab);
+                    const ctx = document.getElementById('chart-soal-bab');
+                    chartSoalBab = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels.length ? labels : ['Belum ada soal'],
+                            datasets: [{
+                                label: 'Jumlah Soal',
+                                data: values.length ? values : [0],
+                                backgroundColor: '#0891b2'
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
                 });
         }
 
