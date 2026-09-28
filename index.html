@@ -259,7 +259,7 @@
             <div class="bg-gray-50 border rounded-xl p-4 text-left text-sm space-y-2">
                 <div class="flex justify-between"><span class="text-gray-500">Nama Peserta:</span><span id="finish-nama" class="font-semibold">-</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">Mata Ujian:</span><span id="finish-mapel" class="font-semibold">-</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Jumlah Benar:</span><span id="finish-benar" class="font-semibold">-</span></div>
+                <div id="finish-benar-row" class="flex justify-between"><span class="text-gray-500">Jumlah Benar:</span><span id="finish-benar" class="font-semibold">-</span></div>
             </div>
 
             <div>
@@ -269,14 +269,130 @@
             </div>
 
             <!-- Pembahasan Jawaban Siswa -->
-            <div class="text-left">
+            <div id="pembahasan-wrap" class="text-left">
                 <h3 class="font-bold text-gray-700 mb-2 text-sm border-t pt-4">Pembahasan Jawaban Siswa</h3>
                 <div id="pembahasan-list" class="space-y-3 text-left text-sm"></div>
             </div>
 
+            <button onclick="openDashboard('riwayat', true)" class="w-full bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-2.5 rounded-lg transition duration-200">
+                <i class="fa-solid fa-user-gear mr-1"></i> Buka Dashboard Akun
+            </button>
             <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition duration-200 shadow-md">
                 Selesai
             </button>
+        </div>
+
+        <!-- STEP 7: DASHBOARD AKUN PESERTA (BARU) -->
+        <div id="step-7" class="hidden select-text bg-white w-full max-w-3xl rounded-2xl card-shadow overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-[#1e61a1] text-white p-5 flex items-center gap-4">
+                <div id="dash-head-avatar" class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold overflow-hidden shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                    <h2 id="dash-head-nama" class="font-bold text-lg truncate">-</h2>
+                    <p id="dash-head-sub" class="text-xs text-blue-200 truncate">-</p>
+                </div>
+                <button onclick="dashLogout()" class="text-xs bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg shrink-0">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+                </button>
+            </div>
+
+            <div class="flex border-b text-sm font-semibold text-gray-500">
+                <button id="dashtab-profil" onclick="switchDashTab('profil')" class="flex-1 py-3 border-b-2 border-transparent"><i class="fa-solid fa-id-card mr-1"></i> Profil</button>
+                <button id="dashtab-riwayat" onclick="switchDashTab('riwayat')" class="flex-1 py-3 border-b-2 border-transparent"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Riwayat &amp; Nilai</button>
+                <button id="dashtab-pengaturan" onclick="switchDashTab('pengaturan')" class="flex-1 py-3 border-b-2 border-transparent"><i class="fa-solid fa-gear mr-1"></i> Pengaturan</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto flex-1 text-sm">
+                <!-- PROFIL -->
+                <div id="dashpane-profil" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center gap-5">
+                        <div id="prof-avatar" class="w-28 h-28 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-4xl font-bold overflow-hidden shrink-0 border-4 border-white shadow"></div>
+                        <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div><span class="text-xs text-gray-500 block">Nama Lengkap</span><span id="prof-nama" class="font-semibold break-words">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Nomor Peserta / Induk (NIK)</span><span id="prof-nik" class="font-semibold break-words">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Kelas / Instansi</span><span id="prof-kelas" class="font-semibold break-words">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Username</span><span id="prof-username" class="font-semibold break-words">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Email</span><span id="prof-email" class="font-semibold break-all">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Jenis Kelamin</span><span id="prof-gender" class="font-semibold">-</span></div>
+                            <div><span class="text-xs text-gray-500 block mb-0.5">Status Akun</span><span id="prof-status" class="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIWAYAT & NILAI -->
+                <div id="dashpane-riwayat" class="hidden space-y-3">
+                    <div id="hist-main" class="space-y-3">
+                        <p id="hist-policy" class="text-[11px] text-gray-400"></p>
+                        <div id="hist-list" class="space-y-3"></div>
+                    </div>
+                    <div id="hist-review" class="hidden">
+                        <button onclick="closeReview()" class="text-xs text-blue-600 font-semibold mb-2"><i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Riwayat</button>
+                        <h3 id="review-title" class="font-bold mb-1"></h3>
+                        <p class="text-[11px] text-gray-400 mb-3">Pembahasan mengikuti soal yang tersimpan saat ini di bank soal. Jika admin mengubah atau menghapus soal setelah Anda mengerjakan, tampilannya bisa berbeda dari saat ujian.</p>
+                        <div id="review-list" class="space-y-3 text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- PENGATURAN -->
+                <div id="dashpane-pengaturan" class="hidden space-y-5">
+                    <div class="border rounded-xl p-4 space-y-3">
+                        <h3 class="font-bold">Data Diri &amp; Email</h3>
+                        <div class="flex items-center gap-4">
+                            <div id="set-avatar" class="w-16 h-16 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold overflow-hidden shrink-0"></div>
+                            <div>
+                                <input type="file" id="set-foto" accept="image/*" class="hidden" onchange="handlePhotoSelected(this)">
+                                <button onclick="document.getElementById('set-foto').click()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded border">Ganti Foto</button>
+                                <p id="set-foto-status" class="text-[11px] text-gray-400 mt-1"></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500">Nomor Peserta / Induk (NIK)</label>
+                                <input type="text" id="set-nik" readonly class="w-full bg-gray-100 p-2 rounded border text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500">Nama Lengkap</label>
+                                <input type="text" id="set-nama" class="w-full p-2 rounded border text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500">Jenis Kelamin</label>
+                                <select id="set-gender" class="w-full p-2 rounded border text-sm">
+                                    <option value="Laki-Laki">Laki-Laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500">Kelas / Instansi</label>
+                                <input type="text" id="set-kelas" placeholder="cth: XII IPA 1 / SMAN 1 Surabaya" class="w-full p-2 rounded border text-sm">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="text-xs font-bold text-gray-500">Email</label>
+                                <input type="email" id="set-email" placeholder="nama@email.com" class="w-full p-2 rounded border text-sm">
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-gray-400">NIK tidak dapat diubah sendiri karena dipakai sebagai identitas di rekap nilai. Hubungi admin bila ada kesalahan.</p>
+                        <button onclick="saveProfile()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold">Simpan Perubahan</button>
+                    </div>
+
+                    <div class="border rounded-xl p-4 space-y-3">
+                        <h3 class="font-bold">Ubah Password</h3>
+                        <input type="password" id="set-oldpass" placeholder="Password lama" class="w-full p-2 rounded border text-sm">
+                        <input type="password" id="set-newpass" placeholder="Password baru (min. 4 karakter)" class="w-full p-2 rounded border text-sm">
+                        <input type="password" id="set-newpass2" placeholder="Ulangi password baru" class="w-full p-2 rounded border text-sm">
+                        <button onclick="submitChangePassword()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold">Ubah Password</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bar lanjut ujian (disembunyikan bila dashboard dibuka dari layar hasil ujian) -->
+            <div id="dash-exam-bar" class="border-t bg-gray-50 p-4 flex items-center justify-between gap-3">
+                <div class="text-xs text-gray-500 min-w-0">
+                    <span class="block">Mata ujian yang dipilih:</span>
+                    <span id="dash-mapel" class="font-semibold text-gray-800 block truncate">-</span>
+                </div>
+                <button onclick="dashContinueToExam()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg shadow shrink-0">
+                    Lanjut ke Ujian <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
         </div>
 
     </main>
@@ -344,6 +460,8 @@
                 <input type="password" id="su-password" placeholder="Buat Password (min. 4 karakter)" class="w-full p-2 border rounded text-sm">
                 <input type="text" id="su-nik" placeholder="NIK" class="w-full p-2 border rounded text-sm">
                 <input type="text" id="su-nama" placeholder="Nama Lengkap" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="su-kelas" placeholder="Kelas / Instansi (opsional)" class="w-full p-2 border rounded text-sm">
+                <input type="email" id="su-email" placeholder="Email (opsional)" class="w-full p-2 border rounded text-sm">
                 <select id="su-gender" class="w-full p-2 border rounded text-sm">
                     <option value="Laki-Laki">Laki-Laki</option>
                     <option value="Perempuan">Perempuan</option>
@@ -388,6 +506,14 @@
                     <input type="text" id="cfg-admuser" placeholder="Admin Username" class="w-full p-2 border rounded text-sm">
                     <input type="password" id="cfg-admpass" placeholder="Admin Password" class="w-full p-2 border rounded text-sm">
                     <input type="number" id="cfg-duration" placeholder="Durasi Ujian (Menit)" class="w-full p-2 border rounded text-sm">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">Detail riwayat nilai yang boleh dilihat peserta</label>
+                        <select id="cfg-riwayat" class="w-full p-2 border rounded text-sm">
+                            <option value="1">Nilai akhir saja</option>
+                            <option value="2">Nilai + jumlah benar/salah</option>
+                            <option value="3">Nilai + benar/salah + pembahasan soal</option>
+                        </select>
+                    </div>
                     <button onclick="saveAdminSettings()" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold">Simpan Pengaturan</button>
                 </div>
 
@@ -407,6 +533,8 @@
                         <input type="text" id="u-password" placeholder="Password" class="p-2 border rounded text-sm">
                         <input type="text" id="u-nik" placeholder="NIK" class="p-2 border rounded text-sm">
                         <input type="text" id="u-nama" placeholder="Nama Lengkap" class="p-2 border rounded text-sm">
+                        <input type="text" id="u-kelas" placeholder="Kelas / Instansi" class="p-2 border rounded text-sm">
+                        <input type="email" id="u-email" placeholder="Email (opsional)" class="p-2 border rounded text-sm">
                         <select id="u-gender" class="p-2 border rounded text-sm col-span-2">
                             <option value="Laki-Laki">Laki-Laki</option>
                             <option value="Perempuan">Perempuan</option>
@@ -641,6 +769,8 @@
                         appData = data;
                         document.getElementById('web-title').innerText = data.settings.WebName || "PUSMENDIK";
                         if (data.settings.LogoURL) document.getElementById('web-logo').src = data.settings.LogoURL;
+                        const cfgRiwayat = document.getElementById('cfg-riwayat');
+                        if (cfgRiwayat) cfgRiwayat.value = String(data.settings.RiwayatDetail || 3);
                         populateSelects();
                     }
                 });
@@ -692,7 +822,7 @@
         }
 
         function goToStep(step) {
-            for (let i = 1; i <= 6; i++) document.getElementById(`step-${i}`).classList.add('hidden');
+            for (let i = 1; i <= 7; i++) document.getElementById(`step-${i}`).classList.add('hidden');
             document.getElementById(`step-${step}`).classList.remove('hidden');
         }
 
@@ -706,18 +836,292 @@
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     currentUser = data.user;
+                    currentUserPass = p; // hanya di memori, dipakai untuk verifikasi ulang tiap aksi akun
                     document.getElementById('conf-nik').value = currentUser.nik;
                     document.getElementById('conf-nama').value = currentUser.nama;
                     document.getElementById('conf-mapel').value = document.getElementById('select-mapel').value;
                     document.getElementById('user-badge').classList.remove('hidden');
                     document.getElementById('user-badge').classList.add('flex');
                     document.getElementById('badge-info').innerText = `${currentUser.nik} - ${currentUser.nama}`;
-                    fetchToken();
-                    goToStep(3);
+                    // Setelah login, peserta masuk ke Dashboard Akun dulu; token
+                    // & konfirmasi data (step 3) dimuat saat klik "Lanjut ke Ujian".
+                    openDashboard('profil', false);
                 } else {
                     alert(data.message);
                 }
             });
+        }
+
+        // ============================================================
+        // DASHBOARD AKUN PESERTA (BARU)
+        // Berisi 3 menu: Profil, Riwayat & Nilai, Pengaturan Akun.
+        // Password hanya disimpan di memori halaman (bukan localStorage)
+        // dan dikirim ulang ke server pada setiap aksi akun, karena
+        // server memverifikasi username+password di setiap panggilan.
+        // ============================================================
+        let currentUserPass = '';
+        let historyCache = [];
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function accountPost(action, extra) {
+            return fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(Object.assign({ action: action, username: currentUser.username, password: currentUserPass }, extra || {}))
+            }).then(res => res.json());
+        }
+
+        // Tampilkan foto bila ada; bila tidak ada / gagal dimuat, tampilkan huruf awal nama.
+        function setAvatar(el, user) {
+            if (!el) return;
+            el.textContent = (user.nama || user.username || '?').trim().charAt(0).toUpperCase();
+            if (user.foto) {
+                const img = new Image();
+                img.alt = 'Foto profil';
+                img.className = 'w-full h-full object-cover';
+                img.referrerPolicy = 'no-referrer';
+                img.onload = () => { el.textContent = ''; el.appendChild(img); };
+                img.src = user.foto;
+            }
+        }
+
+        function refreshAvatars() {
+            setAvatar(document.getElementById('dash-head-avatar'), currentUser);
+            setAvatar(document.getElementById('prof-avatar'), currentUser);
+            setAvatar(document.getElementById('set-avatar'), currentUser);
+        }
+
+        function openDashboard(tab, fromExam) {
+            renderDashboard();
+            document.getElementById('dash-exam-bar').classList.toggle('hidden', !!fromExam);
+            document.getElementById('dash-mapel').innerText = document.getElementById('select-mapel').value || '-';
+            switchDashTab(tab || 'profil');
+            goToStep(7);
+        }
+
+        function renderDashboard() {
+            const u = currentUser;
+            const dash = (v) => (v && String(v).trim()) ? v : '-';
+
+            refreshAvatars();
+            document.getElementById('dash-head-nama').innerText = u.nama || u.username;
+            document.getElementById('dash-head-sub').innerText = `${dash(u.nik)} • ${u.kelas ? u.kelas : 'Kelas/Instansi belum diisi'}`;
+
+            document.getElementById('prof-nama').innerText = dash(u.nama);
+            document.getElementById('prof-nik').innerText = dash(u.nik);
+            document.getElementById('prof-kelas').innerText = dash(u.kelas);
+            document.getElementById('prof-username').innerText = dash(u.username);
+            document.getElementById('prof-email').innerText = dash(u.email);
+            document.getElementById('prof-gender').innerText = dash(u.gender);
+
+            const st = document.getElementById('prof-status');
+            const aktif = (u.status || 'Aktif') === 'Aktif';
+            st.innerText = u.status || 'Aktif';
+            st.className = 'inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ' + (aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600');
+
+            // Form pengaturan
+            document.getElementById('set-nik').value = u.nik || '';
+            document.getElementById('set-nama').value = u.nama || '';
+            document.getElementById('set-gender').value = u.gender === 'Perempuan' ? 'Perempuan' : 'Laki-Laki';
+            document.getElementById('set-kelas').value = u.kelas || '';
+            document.getElementById('set-email').value = u.email || '';
+
+            // Sinkronkan tampilan lain yang memakai data profil
+            document.getElementById('conf-nama').value = u.nama || '';
+            document.getElementById('badge-info').innerText = `${u.nik} - ${u.nama}`;
+        }
+
+        function switchDashTab(tab) {
+            ['profil', 'riwayat', 'pengaturan'].forEach(t => {
+                document.getElementById(`dashpane-${t}`).classList.toggle('hidden', t !== tab);
+                const btn = document.getElementById(`dashtab-${t}`);
+                btn.classList.toggle('border-blue-600', t === tab);
+                btn.classList.toggle('text-blue-600', t === tab);
+            });
+            if (tab === 'riwayat') loadHistory();
+        }
+
+        function dashContinueToExam() {
+            fetchToken();
+            goToStep(3);
+        }
+
+        function dashLogout() {
+            if (confirm('Keluar dari akun?')) location.reload();
+        }
+
+        // ---------- RIWAYAT & NILAI ----------
+        function loadHistory() {
+            closeReview();
+            const listEl = document.getElementById('hist-list');
+            const policyEl = document.getElementById('hist-policy');
+            listEl.innerHTML = '<p class="text-gray-400 text-center py-6">Memuat riwayat...</p>';
+            policyEl.innerText = '';
+
+            accountPost('getMyHistory').then(data => {
+                if (!data.success) {
+                    listEl.innerHTML = `<p class="text-red-500 text-center py-6">${escapeHtml(data.message || 'Gagal memuat riwayat.')}</p>`;
+                    return;
+                }
+                historyCache = data.history || [];
+                const level = data.level;
+                policyEl.innerText = level === 1
+                    ? 'Penyelenggara hanya menampilkan nilai akhir.'
+                    : (level === 2 ? 'Penyelenggara menampilkan nilai akhir serta jumlah jawaban benar/salah.' : '');
+
+                if (historyCache.length === 0) {
+                    listEl.innerHTML = '<p class="text-gray-400 text-center py-8">Belum ada ujian yang diselesaikan.</p>';
+                    return;
+                }
+
+                listEl.innerHTML = historyCache.map((h, i) => {
+                    const waktu = h.waktuKirim
+                        ? new Date(h.waktuKirim).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+                        : '-';
+                    const detail = level >= 2 ? `
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div><span class="block text-gray-400">Benar</span><span class="font-bold text-green-600">${h.benar}</span></div>
+                            <div><span class="block text-gray-400">Salah/Kosong</span><span class="font-bold text-red-500">${h.salah}</span></div>
+                            <div><span class="block text-gray-400">Total Soal</span><span class="font-bold text-gray-700">${h.totalSoal}</span></div>
+                        </div>` : '';
+                    const btn = h.bisaLihatPembahasan
+                        ? `<button onclick="openReview(${i})" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap">Lihat Pembahasan</button>`
+                        : '';
+                    return `
+                        <div class="border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-gray-800">${escapeHtml(h.mapel)}</p>
+                                <p class="text-xs text-gray-500">${escapeHtml(h.jenjang)} · ${escapeHtml(h.jenis)}</p>
+                                <p class="text-[11px] text-gray-400 mt-1"><i class="fa-regular fa-clock"></i> ${escapeHtml(waktu)}</p>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[11px] text-gray-500 block">Nilai Akhir</span>
+                                <span class="text-2xl font-extrabold text-blue-600">${escapeHtml(h.skor)}</span><span class="text-xs text-gray-400">/800</span>
+                            </div>
+                            ${detail}
+                            ${btn}
+                        </div>`;
+                }).join('');
+            }).catch(() => {
+                listEl.innerHTML = '<p class="text-red-500 text-center py-6">Gagal memuat riwayat. Periksa koneksi internet Anda.</p>';
+            });
+        }
+
+        function openReview(i) {
+            const h = historyCache[i];
+            if (!h) return;
+            document.getElementById('hist-main').classList.add('hidden');
+            document.getElementById('hist-review').classList.remove('hidden');
+            document.getElementById('review-title').innerText = `Pembahasan: ${h.mapel}`;
+            const list = document.getElementById('review-list');
+            list.innerHTML = '<p class="text-gray-400 text-center py-6">Memuat pembahasan...</p>';
+
+            accountPost('getExamReview', { jenjang: h.jenjang, jenis: h.jenis, mapel: h.mapel }).then(data => {
+                if (!data.success) {
+                    list.innerHTML = `<p class="text-red-500 text-center py-6">${escapeHtml(data.message || 'Gagal memuat pembahasan.')}</p>`;
+                    return;
+                }
+                if (!data.questions || data.questions.length === 0) {
+                    list.innerHTML = '<p class="text-gray-400 text-center py-6">Soal untuk ujian ini sudah tidak tersedia.</p>';
+                    return;
+                }
+                renderPembahasanTo(list, data.questions, data.answers);
+            }).catch(() => {
+                list.innerHTML = '<p class="text-red-500 text-center py-6">Gagal memuat pembahasan. Periksa koneksi internet Anda.</p>';
+            });
+        }
+
+        function closeReview() {
+            document.getElementById('hist-review').classList.add('hidden');
+            document.getElementById('hist-main').classList.remove('hidden');
+        }
+
+        // ---------- PENGATURAN AKUN ----------
+        function saveProfile() {
+            const p = {
+                nama: document.getElementById('set-nama').value.trim(),
+                gender: document.getElementById('set-gender').value,
+                kelas: document.getElementById('set-kelas').value.trim(),
+                email: document.getElementById('set-email').value.trim()
+            };
+            if (!p.nama) return alert('Nama lengkap tidak boleh kosong!');
+            if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) return alert('Format email tidak valid!');
+
+            accountPost('updateProfile', { profile: p }).then(data => {
+                if (data.success) {
+                    currentUser = Object.assign({}, currentUser, data.user);
+                    renderDashboard();
+                    alert('Data diri berhasil diperbarui.');
+                } else {
+                    alert(data.message || 'Gagal menyimpan perubahan.');
+                }
+            }).catch(() => alert('Gagal menyimpan. Periksa koneksi internet Anda.'));
+        }
+
+        function submitChangePassword() {
+            const oldP = document.getElementById('set-oldpass').value;
+            const newP = document.getElementById('set-newpass').value;
+            const newP2 = document.getElementById('set-newpass2').value;
+
+            if (!oldP || !newP || !newP2) return alert('Lengkapi semua kolom password!');
+            if (newP.length < 4) return alert('Password baru minimal 4 karakter!');
+            if (newP !== newP2) return alert('Konfirmasi password baru tidak cocok!');
+
+            // Server memverifikasi password LAMA langsung dari sheet, bukan dari memori halaman.
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'changePassword', username: currentUser.username, password: oldP, newPassword: newP })
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    currentUserPass = newP;
+                    ['set-oldpass', 'set-newpass', 'set-newpass2'].forEach(id => document.getElementById(id).value = '');
+                    alert('Password berhasil diubah. Gunakan password baru saat login berikutnya.');
+                } else {
+                    alert(data.message || 'Gagal mengubah password.');
+                }
+            }).catch(() => alert('Gagal mengubah password. Periksa koneksi internet Anda.'));
+        }
+
+        // Foto dipotong persegi & dikecilkan (300x300) di browser sebelum diunggah.
+        function handlePhotoSelected(input) {
+            const file = input.files && input.files[0];
+            const status = document.getElementById('set-foto-status');
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { status.innerText = 'File harus berupa gambar.'; return; }
+
+            status.innerText = 'Memproses foto...';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const size = 300;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const side = Math.min(img.width, img.height);
+                    canvas.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                    status.innerText = 'Mengunggah foto...';
+                    accountPost('uploadProfilePhoto', { base64: dataUrl }).then(data => {
+                        if (data.success) {
+                            currentUser.foto = data.url;
+                            refreshAvatars();
+                            status.innerText = 'Foto berhasil diperbarui.';
+                        } else {
+                            status.innerText = data.message || 'Gagal mengunggah foto.';
+                        }
+                    }).catch(() => { status.innerText = 'Gagal mengunggah foto. Periksa koneksi internet Anda.'; });
+                    input.value = '';
+                };
+                img.onerror = () => { status.innerText = 'Gambar tidak dapat dibaca.'; };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         function fetchToken() {
@@ -745,6 +1149,8 @@
                 password: document.getElementById('su-password').value.trim(),
                 nik: document.getElementById('su-nik').value.trim(),
                 nama: document.getElementById('su-nama').value.trim(),
+                kelas: document.getElementById('su-kelas').value.trim(),
+                email: document.getElementById('su-email').value.trim(),
                 gender: document.getElementById('su-gender').value
             };
 
@@ -753,6 +1159,9 @@
             }
             if (u.password.length < 4) {
                 return alert("Password minimal 4 karakter!");
+            }
+            if (u.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u.email)) {
+                return alert("Format email tidak valid!");
             }
 
             fetch(API_URL, {
@@ -763,7 +1172,7 @@
                     alert("Pendaftaran berhasil! Silakan login dengan akun yang baru dibuat.");
                     document.getElementById('login-user').value = u.username;
                     document.getElementById('login-pass').value = '';
-                    ['su-username', 'su-password', 'su-nik', 'su-nama'].forEach(id => document.getElementById(id).value = '');
+                    ['su-username', 'su-password', 'su-nik', 'su-nama', 'su-kelas', 'su-email'].forEach(id => document.getElementById(id).value = '');
                     closeSignupModal();
                 } else {
                     alert(data.message || 'Gagal mendaftar, silakan coba lagi.');
@@ -1112,7 +1521,12 @@
             document.getElementById('finish-mapel').innerText = document.getElementById('select-mapel').value;
             document.getElementById('finish-benar').innerText = `${data.benar} dari ${data.totalSoal} soal`;
             document.getElementById('finish-skor').innerText = data.skor;
-            renderPembahasan();
+
+            // Ikuti kebijakan penyelenggara (pengaturan admin "Detail riwayat nilai")
+            const level = Number(appData.settings.RiwayatDetail) || 3;
+            document.getElementById('finish-benar-row').classList.toggle('hidden', level < 2);
+            document.getElementById('pembahasan-wrap').classList.toggle('hidden', level < 3);
+            if (level >= 3) renderPembahasan();
             goToStep(6);
         }
 
@@ -1123,12 +1537,17 @@
         // dimuat -- tidak perlu fetch ulang ke server.
         // ============================================================
         function renderPembahasan() {
-            const container = document.getElementById('pembahasan-list');
+            renderPembahasanTo(document.getElementById('pembahasan-list'), questions, userAnswers);
+        }
+
+        // Dipakai bersama oleh layar hasil ujian (data dari memori) dan
+        // Riwayat di Dashboard Akun (data dari server via getExamReview).
+        function renderPembahasanTo(container, qList, answersMap) {
             if (!container) return;
             container.innerHTML = '';
 
-            questions.forEach((q, idx) => {
-                const ans = userAnswers[q.id] || {};
+            qList.forEach((q, idx) => {
+                const ans = (answersMap && answersMap[q.id]) || {};
                 let bodyHtml = '';
                 let isCorrect = false;
 
@@ -1635,7 +2054,8 @@
                 logoUrl: document.getElementById('cfg-logourl').value,
                 adminUser: document.getElementById('cfg-admuser').value,
                 adminPass: document.getElementById('cfg-admpass').value,
-                duration: document.getElementById('cfg-duration').value
+                duration: document.getElementById('cfg-duration').value,
+                riwayatDetail: document.getElementById('cfg-riwayat').value
             };
             fetch(API_URL, {
                 method: 'POST',
@@ -1680,6 +2100,8 @@
                 password: document.getElementById('u-password').value.trim(),
                 nik: document.getElementById('u-nik').value.trim(),
                 nama: document.getElementById('u-nama').value.trim(),
+                kelas: document.getElementById('u-kelas').value.trim(),
+                email: document.getElementById('u-email').value.trim(),
                 gender: document.getElementById('u-gender').value
             };
             if (!u.username || !u.password || !u.nik || !u.nama) return alert("Lengkapi semua data peserta!");
@@ -1690,7 +2112,7 @@
             }).then(res => res.json()).then(data => {
                 if (data.success) {
                     alert("Peserta berhasil ditambahkan!");
-                    ['u-username', 'u-password', 'u-nik', 'u-nama'].forEach(id => document.getElementById(id).value = '');
+                    ['u-username', 'u-password', 'u-nik', 'u-nama', 'u-kelas', 'u-email'].forEach(id => document.getElementById(id).value = '');
                     refreshUserList();
                 } else {
                     alert(data.message || 'Gagal menambahkan peserta');
@@ -1709,10 +2131,23 @@
                     }
                     el.innerHTML = data.users.map(u => `
                         <div class="flex justify-between items-center border-b py-1 gap-2">
-                            <span class="flex-1">${u.username} - ${u.nama} (${u.nik})</span>
+                            <span class="flex-1">${escapeHtml(u.username)} - ${escapeHtml(u.nama)} (${escapeHtml(u.nik)})${u.kelas ? ' · ' + escapeHtml(u.kelas) : ''}</span>
+                            <button onclick="toggleUserStatus('${u.username}', '${u.status}')" title="Klik untuk mengubah status akun" class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${u.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${escapeHtml(u.status)}</button>
                             <button onclick="deleteUserByUsername('${u.username}')" class="text-red-500 hover:text-red-700 shrink-0"><i class="fa-solid fa-trash"></i></button>
                         </div>`).join('');
                 });
+        }
+
+        function toggleUserStatus(username, current) {
+            const next = current === 'Aktif' ? 'Nonaktif' : 'Aktif';
+            if (!confirm(`Ubah status akun "${username}" menjadi ${next}?`)) return;
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'setUserStatus', username, status: next })
+            }).then(res => res.json()).then(data => {
+                if (data.success) refreshUserList();
+                else alert(data.message || 'Gagal mengubah status akun');
+            });
         }
 
         function deleteUserByUsername(username) {
