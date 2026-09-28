@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js untuk Grafik Analisis Panel Admin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { background-color: #0f4c81; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -313,6 +314,7 @@
                             <div><span class="text-xs text-gray-500 block">Username</span><span id="prof-username" class="font-semibold break-words">-</span></div>
                             <div><span class="text-xs text-gray-500 block">Email</span><span id="prof-email" class="font-semibold break-all">-</span></div>
                             <div><span class="text-xs text-gray-500 block">Jenis Kelamin</span><span id="prof-gender" class="font-semibold">-</span></div>
+                            <div><span class="text-xs text-gray-500 block">Tanggal Lahir</span><span id="prof-dob" class="font-semibold">-</span></div>
                             <div><span class="text-xs text-gray-500 block mb-0.5">Status Akun</span><span id="prof-status" class="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full">-</span></div>
                         </div>
                     </div>
@@ -363,6 +365,15 @@
                             <div>
                                 <label class="text-xs font-bold text-gray-500">Kelas / Instansi</label>
                                 <input type="text" id="set-kelas" placeholder="cth: XII IPA 1 / SMAN 1 Surabaya" class="w-full p-2 rounded border text-sm">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="text-xs font-bold text-gray-500">Tanggal Lahir</label>
+                                <div class="flex gap-2">
+                                    <select id="set-dob-day" class="border p-2 rounded flex-1 text-xs"></select>
+                                    <select id="set-dob-month" class="border p-2 rounded flex-1 text-xs"></select>
+                                    <select id="set-dob-year" class="border p-2 rounded flex-1 text-xs"></select>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-1">Tersimpan di akun dan otomatis terisi pada layar Konfirmasi Data Peserta.</p>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="text-xs font-bold text-gray-500">Email</label>
@@ -628,7 +639,10 @@
                             <h4 class="font-bold text-xs">Rangkuman Jawaban & Nilai Peserta</h4>
                             <p id="summary-stats" class="text-[11px] text-gray-400"></p>
                         </div>
-                        <button onclick="refreshSummaryList()" class="text-xs bg-gray-200 px-2 py-1 rounded">Refresh</button>
+                        <div class="flex gap-2">
+                            <button onclick="exportSummaryExcel()" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"><i class="fa-solid fa-file-excel mr-1"></i>Unduh Excel</button>
+                            <button onclick="refreshSummaryList()" class="text-xs bg-gray-200 px-2 py-1 rounded">Refresh</button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto border rounded">
                         <table class="w-full text-xs border-collapse">
@@ -694,7 +708,10 @@
                     <div class="border rounded-lg p-3">
                         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                             <h5 class="font-bold text-xs text-gray-600">Analisis Butir Soal per Bab/Materi</h5>
-                            <p id="butir-stats" class="text-[11px] text-gray-400"></p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p id="butir-stats" class="text-[11px] text-gray-400"></p>
+                                <button onclick="exportButirExcel()" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"><i class="fa-solid fa-file-excel mr-1"></i>Unduh Excel</button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto border rounded">
                             <table class="w-full text-xs border-collapse">
@@ -917,6 +934,7 @@
             document.getElementById('prof-username').innerText = dash(u.username);
             document.getElementById('prof-email').innerText = dash(u.email);
             document.getElementById('prof-gender').innerText = dash(u.gender);
+            document.getElementById('prof-dob').innerText = formatDobDisplay(u.tanggalLahir);
 
             const st = document.getElementById('prof-status');
             const aktif = (u.status || 'Aktif') === 'Aktif';
@@ -929,9 +947,12 @@
             document.getElementById('set-gender').value = u.gender === 'Perempuan' ? 'Perempuan' : 'Laki-Laki';
             document.getElementById('set-kelas').value = u.kelas || '';
             document.getElementById('set-email').value = u.email || '';
+            setDobSelects('set-dob', u.tanggalLahir);
 
             // Sinkronkan tampilan lain yang memakai data profil
             document.getElementById('conf-nama').value = u.nama || '';
+            document.getElementById('conf-gender').value = u.gender === 'Perempuan' ? 'Perempuan' : 'Laki-Laki';
+            setDobSelects('dob', u.tanggalLahir); // otomatis terisi di Konfirmasi Data Peserta
             document.getElementById('badge-info').innerText = `${u.nik} - ${u.nama}`;
         }
 
@@ -1049,6 +1070,9 @@
                 email: document.getElementById('set-email').value.trim()
             };
             if (!p.nama) return alert('Nama lengkap tidak boleh kosong!');
+            const dob = getDobFromSelects('set-dob');
+            if (dob === null) return alert('Tanggal lahir belum lengkap atau tidak valid! Pilih hari, bulan, dan tahun (atau kosongkan ketiganya).');
+            p.tanggalLahir = dob;
             if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) return alert('Format email tidak valid!');
 
             accountPost('updateProfile', { profile: p }).then(data => {
@@ -2173,6 +2197,7 @@
             fetch(`${API_URL}?action=getSummary`)
                 .then(res => res.json())
                 .then(data => {
+                    lastSummaryData = (data.success && data.summary) ? data.summary : [];
                     if (!data.success || !data.summary || data.summary.length === 0) {
                         body.innerHTML = '<tr><td colspan="8" class="text-center text-gray-400 p-3">Belum ada data jawaban peserta.</td></tr>';
                         stats.innerText = '';
@@ -2452,6 +2477,7 @@
 
                     const butir = data.butir || [];
                     const perBab = data.perBab || [];
+                    lastButirData = { jenjang: jenjang, jenis: jenis, mapel: mapel, butir: butir, perBab: perBab };
 
                     // Chart rata-rata % benar per Bab/Materi
                     chartPersenBab = destroyChart(chartPersenBab);
@@ -2512,27 +2538,202 @@
                 });
         }
 
-        function populateDobDropdowns() {
-            const daySelect = document.getElementById('dob-day');
-            const monthSelect = document.getElementById('dob-month');
-            const yearSelect = document.getElementById('dob-year');
+        // ============================================================
+        // TANGGAL LAHIR (dropdown hari/bulan/tahun)
+        // Dipakai di 2 tempat: Konfirmasi Data Peserta (prefix "dob") dan
+        // Dashboard Akun > Pengaturan (prefix "set-dob"). Nilai disimpan di
+        // server sebagai teks "yyyy-MM-dd".
+        // ============================================================
+        const DOB_MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+        function fillDobSelects(prefix) {
+            const daySelect = document.getElementById(prefix + '-day');
+            const monthSelect = document.getElementById(prefix + '-month');
+            const yearSelect = document.getElementById(prefix + '-year');
+            if (!daySelect || !monthSelect || !yearSelect) return;
 
             daySelect.innerHTML = '<option value="">Hari</option>';
             for (let i = 1; i <= 31; i++) {
-                const d = i < 10 ? '0' + i : i;
+                const d = i < 10 ? '0' + i : String(i);
                 daySelect.innerHTML += `<option value="${d}">${d}</option>`;
             }
 
-            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             monthSelect.innerHTML = '<option value="">Bulan</option>';
-            months.forEach((m, idx) => {
-                monthSelect.innerHTML += `<option value="${idx + 1}">${m}</option>`;
+            DOB_MONTHS.forEach((m, idx) => {
+                const v = (idx + 1) < 10 ? '0' + (idx + 1) : String(idx + 1);
+                monthSelect.innerHTML += `<option value="${v}">${m}</option>`;
             });
 
             yearSelect.innerHTML = '<option value="">Tahun</option>';
             for (let y = 1990; y <= 2020; y++) {
                 yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
             }
+        }
+
+        function populateDobDropdowns() {
+            fillDobSelects('dob');
+            fillDobSelects('set-dob');
+        }
+
+        // iso = "yyyy-MM-dd" (atau kosong -> semua dropdown dikosongkan)
+        function setDobSelects(prefix, iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+            const y = document.getElementById(prefix + '-year');
+            const mo = document.getElementById(prefix + '-month');
+            const d = document.getElementById(prefix + '-day');
+            if (!y || !mo || !d) return;
+            if (!m) { y.value = ''; mo.value = ''; d.value = ''; return; }
+            // Tahun di luar rentang dropdown tetap ditampilkan (jangan hilang)
+            if (![...y.options].some(o => o.value === m[1])) {
+                y.innerHTML += `<option value="${m[1]}">${m[1]}</option>`;
+            }
+            y.value = m[1];
+            mo.value = m[2];
+            d.value = m[3];
+        }
+
+        // Mengembalikan "yyyy-MM-dd", "" bila ketiganya kosong, atau null bila
+        // belum lengkap / tanggal tidak nyata (mis. 31 Februari).
+        function getDobFromSelects(prefix) {
+            const y = document.getElementById(prefix + '-year').value;
+            const mo = document.getElementById(prefix + '-month').value;
+            const d = document.getElementById(prefix + '-day').value;
+            if (!y && !mo && !d) return '';
+            if (!y || !mo || !d) return null;
+            const dt = new Date(Number(y), Number(mo) - 1, Number(d));
+            if (dt.getFullYear() !== Number(y) || dt.getMonth() !== Number(mo) - 1 || dt.getDate() !== Number(d)) return null;
+            return `${y}-${mo}-${d}`;
+        }
+
+        function formatDobDisplay(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+            if (!m) return '-';
+            return `${Number(m[3])} ${DOB_MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+        }
+
+        // ============================================================
+        // UNDUH EXCEL (Rangkuman Nilai & Analisis Butir) - memakai SheetJS
+        // Data diambil dari hasil terakhir refreshSummaryList() /
+        // refreshButirAnalysis() yang sedang tampil di panel admin.
+        // ============================================================
+        let lastSummaryData = [];
+        let lastButirData = null;
+
+        function xlsxReady() {
+            if (typeof XLSX === 'undefined') {
+                alert('Library Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.');
+                return false;
+            }
+            return true;
+        }
+
+        function autoWidth(rows) {
+            if (!rows.length) return [];
+            return Object.keys(rows[0]).map(k => {
+                const max = rows.reduce((w, r) => Math.max(w, String(r[k] == null ? '' : r[k]).length), k.length);
+                return { wch: Math.min(Math.max(max + 2, 8), 60) };
+            });
+        }
+
+        function makeSheet(rows) {
+            const ws = XLSX.utils.json_to_sheet(rows);
+            ws['!cols'] = autoWidth(rows);
+            return ws;
+        }
+
+        function stampForFile() {
+            const n = new Date();
+            const p = (x) => String(x).padStart(2, '0');
+            return `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}`;
+        }
+
+        function safeSheetName(s) {
+            return String(s).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31) || 'Sheet';
+        }
+
+        function stripHtml(s) {
+            return String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function exportSummaryExcel() {
+            if (!xlsxReady()) return;
+            if (!lastSummaryData || lastSummaryData.length === 0) {
+                return alert('Belum ada data rangkuman untuk diunduh. Klik Refresh terlebih dahulu.');
+            }
+
+            const rows = lastSummaryData.map((s, i) => ({
+                'No': i + 1,
+                'Nama': s.nama || '',
+                'Username': s.username || '',
+                'NIK': String(s.nik || ''),
+                'Jenjang': s.jenjang || '',
+                'Jenis': s.jenis || '',
+                'Mata Pelajaran': s.mapel || '',
+                'Status': s.status || '',
+                'Skor': (s.skor === null || s.skor === '') ? '' : Number(s.skor),
+                'Jumlah Benar': (s.benar === null || s.benar === '') ? '' : Number(s.benar),
+                'Total Soal': (s.totalSoal === null || s.totalSoal === '') ? '' : Number(s.totalSoal),
+                'Waktu Kirim': s.waktuKirim ? new Date(s.waktuKirim).toLocaleString('id-ID') : ''
+            }));
+
+            // Sheet 2: ringkasan per mata pelajaran (hanya peserta "Selesai")
+            const perMapel = {};
+            lastSummaryData.filter(s => s.status === 'Selesai' && s.skor !== null && s.skor !== '').forEach(s => {
+                const key = `${s.jenjang} | ${s.jenis} | ${s.mapel}`;
+                (perMapel[key] = perMapel[key] || []).push(Number(s.skor));
+            });
+            const ringkasan = Object.keys(perMapel).map(k => {
+                const arr = perMapel[k];
+                return {
+                    'Jenjang | Jenis | Mapel': k,
+                    'Jumlah Peserta Selesai': arr.length,
+                    'Rata-rata Skor': Math.round(arr.reduce((a, b) => a + b, 0) / arr.length),
+                    'Skor Tertinggi': Math.max.apply(null, arr),
+                    'Skor Terendah': Math.min.apply(null, arr)
+                };
+            });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, makeSheet(rows), 'Rangkuman Nilai');
+            if (ringkasan.length) XLSX.utils.book_append_sheet(wb, makeSheet(ringkasan), 'Ringkasan per Mapel');
+            XLSX.writeFile(wb, `Rangkuman_Nilai_${stampForFile()}.xlsx`);
+        }
+
+        function exportButirExcel() {
+            if (!xlsxReady()) return;
+            if (!lastButirData || !lastButirData.butir || lastButirData.butir.length === 0) {
+                return alert('Pilih Jenjang, Jenis, dan Mapel pada tab Analisis sampai tabel analisis butir soal tampil, lalu klik Unduh Excel.');
+            }
+
+            const d = lastButirData;
+            const rows = d.butir.map(b => ({
+                'No': b.nomor,
+                'Bab/Materi': b.babMateri || '',
+                'Tipe': b.type || '',
+                'Pertanyaan': stripHtml(b.question),
+                'Menjawab': b.totalJawab,
+                'Benar': b.totalBenar,
+                '% Benar': b.persenBenar,
+                'Kategori': b.kategori || ''
+            }));
+            const perBab = (d.perBab || []).map(b => ({
+                'Bab/Materi': b.babMateri,
+                'Rata-rata % Benar': b.rataPersenBenar
+            }));
+            const info = [
+                { 'Keterangan': 'Jenjang', 'Isi': d.jenjang },
+                { 'Keterangan': 'Jenis', 'Isi': d.jenis },
+                { 'Keterangan': 'Mata Pelajaran', 'Isi': d.mapel },
+                { 'Keterangan': 'Dasar perhitungan', 'Isi': 'Hanya peserta berstatus Selesai' },
+                { 'Keterangan': 'Kategori', 'Isi': 'Mudah >= 70% | Sedang 30-69% | Sulit < 30%' },
+                { 'Keterangan': 'Diunduh pada', 'Isi': new Date().toLocaleString('id-ID') }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, makeSheet(rows), 'Analisis Butir');
+            if (perBab.length) XLSX.utils.book_append_sheet(wb, makeSheet(perBab), 'Per Bab-Materi');
+            XLSX.utils.book_append_sheet(wb, makeSheet(info), 'Info');
+            XLSX.writeFile(wb, `Analisis_Butir_${safeSheetName(d.mapel).replace(/\s+/g, '_')}_${stampForFile()}.xlsx`);
         }
     </script>
 </body>
